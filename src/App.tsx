@@ -1,8 +1,11 @@
 import React from 'react';
 import Main from 'Main';
 import Swal from 'sweetalert2';
+import * as Manki from 'api/manki';
 
 function App() {
+  const [adminId, setAdminId] = React.useState<Manki.AdminId>();
+
   async function onLoad() {
     const { adminName, adminPass } = await (async () => {
       let adminNameResult, adminPassResult;
@@ -37,7 +40,22 @@ function App() {
        adminPass: adminPassResult.value,
       };
     })();
-    console.debug(adminName, adminPass);
+    const adminId = await Manki.loginAdmin(adminName, adminPass);
+    if (adminId instanceof Error) {
+      Swal.disableButtons();
+      Swal.fire({
+        titleText: 'ログインに失敗しました',
+        text: adminId.message + '続行するにはリロードしてください',
+        icon: 'error',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowEnterKey: false,
+        showConfirmButton: false,
+        willClose: () => window.location.reload(),
+      });
+      return;
+    }
+    setAdminId(adminId);
   }
 
   const didLogRef = React.useRef(false);
