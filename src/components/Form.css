@@ -1,0 +1,7 @@
+.the-form {
+    display: flex;
+}
+
+.the-form > * {
+    flex: 1 0;
+}
