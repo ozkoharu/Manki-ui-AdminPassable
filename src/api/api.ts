@@ -427,7 +427,7 @@ interface LoginAdminQuery {
  * @throws Fetch API に由来する例外
  */
 export async function loginAdmin(args: ApiTypes.LoginAdminArg) {
-    const API_PATH = '/loadinAdmin';
+    const API_PATH = '/loginAdmin';
     const query: LoginAdminQuery = {
         ...args,
     };
