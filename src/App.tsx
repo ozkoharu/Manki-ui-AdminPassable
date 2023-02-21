@@ -1,12 +1,20 @@
 import React from 'react';
-import Main from 'Main';
+import Form from 'components/Form';
+import Map from 'components/Map';
 import Swal from 'sweetalert2';
 import * as Manki from 'api/manki';
+import './App.css';
+
+export const appDataContext = React.createContext({} as {
+  adminId: Manki.AdminId | undefined;
+  passableInfo: Manki.PassableInfo[];
+});
 
 function App() {
   const [adminId, setAdminId] = React.useState<Manki.AdminId>();
+  const [passableInfo, setPassableInfo] = React.useState<Manki.PassableInfo[]>([]);
 
-  async function onLoad() {
+  async function makeAdminId() {
     const { adminName, adminPass } = await (async () => {
       let adminNameResult, adminPassResult;
       do {
@@ -53,21 +61,53 @@ function App() {
         showConfirmButton: false,
         willClose: () => window.location.reload(),
       });
-      return;
+      return null;
     }
     setAdminId(adminId);
+    return adminId;
   }
+
+  async function getPassableInfo(adminId: Manki.AdminId) {
+    const result = await Manki.getPassableAdmin(adminId);
+    if (result instanceof Error) {
+        void await Manki.terminateAdmin(adminId);
+        Swal.disableButtons();
+        Swal.fire({
+            titleText: '通行可能領域の取得に失敗しました',
+            text: result.message + '続行するにはリロードしてください。',
+            icon: 'error',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showConfirmButton: false,
+            willClose: () => window.location.reload(),
+        });
+        return null;
+    }
+    setPassableInfo(result);
+    return result;
+}
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
     if (!didLogRef.current) {
       didLogRef.current = true;
-      onLoad();
+      makeAdminId().then((result) => {
+        if (result === null) {
+          return null;
+        }
+        getPassableInfo(result);
+      });
     }
   }, []);
 
   return (
-    <Main />
+    <appDataContext.Provider value={{adminId, passableInfo}}>
+      <div className="main-area">
+        <Form />
+        <Map />
+      </div>
+    </appDataContext.Provider>
   );
 }
 
